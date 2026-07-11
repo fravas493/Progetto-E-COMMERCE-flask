@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Catalogo Prodotti TechShop</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f9; padding: 30px; margin: 0; }
+        .main-layout { display: flex; max-width: 1200px; margin: 0 auto; gap: 30px; }
+        .container { flex-grow: 1; }
+        
+        .categories-bar { margin-bottom: 30px; text-align: center; }
+        .btn-category { padding: 10px 20px; margin: 5px; background-color: #007bff; color: white; border: none; border-radius: 20px; cursor: pointer; font-weight: bold; }
+        .btn-category:hover { background-color: #0056b3; }
+        
+        .product-card { background: white; padding: 20px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; align-items: center; }
+        .product-img { width: 150px; height: 150px; object-fit: cover; margin-right: 20px; border-radius: 4px; background-color: #eee; }
+        .product-details { flex-grow: 1; text-align: left; }
+        .product-title { margin: 0 0 10px 0; color: #333; }
+        .product-desc { color: #666; font-size: 14px; margin-bottom: 10px; }
+        .product-price { font-size: 18px; font-weight: bold; color: #B12704; margin-bottom: 10px; }
+        
+        .btn-add { background-color: #ffd814; color: #0f1111; border: 1px solid #fcd200; border-radius: 20px; padding: 8px 16px; cursor: pointer; font-weight: bold; }
+        .btn-add:hover { background-color: #f7ca00; }
+
+        .cart-sidebar { width: 300px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); height: fit-content; }
+        .cart-title { margin-top: 0; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        .cart-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; font-size: 14px; }
+        .btn-checkout { width: 100%; background-color: #28a745; color: white; border: none; padding: 12px; border-radius: 4px; font-weight: bold; cursor: pointer; margin-top: 15px; font-size: 16px; }
+        .btn-checkout:hover { background-color: #218838; }
+        .btn-clear { background: none; border: none; color: #dc3545; cursor: pointer; font-size: 12px; text-decoration: underline; margin-top: 10px; display: block; }
+    </style>
+</head>
+<body>
+
+    <div class="main-layout">
+        
+        <div class="container">
+            <h2>Il nostro Catalogo</h2>
+
+            <div class="categories-bar">
+                <button class="btn-category" style="background-color: #6c757d;" onclick="filtraCategoria('tutti')">Tutti i prodotti</button>
+                {% for categoria in categorie %}
+                    <button class="btn-category" onclick="filtraCategoria('{{ categoria.id_categoria }}')">
+                        {{ categoria.nome }}
+                    </button>
+                {% endfor %}
+            </div>
+
+            <div class="products-list">
+                {% for prodotto in prodotti %}
+                    <div class="product-card" data-categoria="{{ prodotto.id_categoria }}">
+                        <img class="product-img" src="{{ 'static/' + prodotto.immagine }}" alt="{{ prodotto.nome }}">
+                        
+                        <div class="product-details">
+                            <h3 class="product-title" id="nome-{{ prodotto.id_prodotto }}">{{ prodotto.nome }}</h3>
+                            <p class="product-desc">{{ prodotto.descrizione }}</p>
+                            <p class="product-price">€ {{ prodotto.prezzo }}</p>
+                            
+                            <button class="btn-add" 
+                                    data-id="{{ prodotto.id_prodotto }}" 
+                                    data-nome="{{ prodotto.nome }}" 
+                                    data-prezzo="{{ prodotto.prezzo }}" 
+                                    onclick="aggiungiAlCarrello(this)">
+                                Aggiungi al carrello
+                            </button>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="cart-sidebar">
+            <h3 class="cart-title">Il tuo Carrello 🛒</h3>
+            <div id="cart-items-container">
+                <p style="color: #888;">Il carrello è vuoto.</p>
+            </div>
+            <div id="cart-total" style="margin-top: 15px; font-weight: bold; font-size: 18px; display: none;">
+                Totale: € <span id="total-amount">0.00</span>
+            </div>
+            <button class="btn-checkout" onclick="inviaInBackend()">Procedi al Checkout</button>
+            <button class="btn-clear" onclick="svuotaCarrello()">Svuota carrello</button>
+        </div>
+
+    </div>
+
+    <script>
+        let carrello = JSON.parse(localStorage.getItem('carrello')) || [];
+        aggiornaInterfacciaCarrello();
+
+        function filtraCategoria(idCategoria) {
+            let schede = document.querySelectorAll('.product-card');
+            schede.forEach(scheda => {
+                let categoriaScheda = scheda.dataset.categoria;
+                if (idCategoria === 'tutti' || categoriaScheda === idCategoria) {
+                    scheda.style.display = 'flex';
+                } else {
+                    scheda.style.display = 'none';
+                }
+            });
+        }
+
+        function aggiungiAlCarrello(bottone) {
+            let id = parseInt(bottone.dataset.id);
+            let nome = bottone.dataset.nome;
+            let prezzo = parseFloat(bottone.dataset.prezzo);
+
+            let prodottoEsistente = carrello.find(item => item.id_prodotto === id);
+
+            if (prodottoEsistente) {
+                prodottoEsistente.quantita += 1;
+            } else {
+                carrello.push({ id_prodotto: id, nome: nome, prezzo: prezzo, quantita: 1 });
+            }
+
+            localStorage.setItem('carrello', JSON.stringify(carrello));
+            aggiornaInterfacciaCarrello();
+        }
+
+        function aggiornaInterfacciaCarrello() {
+            let container = document.getElementById('cart-items-container');
+            let totalDiv = document.getElementById('cart-total');
+            let totalSpan = document.getElementById('total-amount');
+            
+            if (carrello.length === 0) {
+                container.innerHTML = '<p style="color: #888;">Il carrello è vuoto.</p>';
+                totalDiv.style.display = 'none';
+                return;
+            }
+
+            container.innerHTML = '';
+            let totale = 0;
+
+            carrello.forEach(item => {
+                totale += item.prezzo * item.quantita;
+                container.innerHTML += `
+                    <div class="cart-item">
+                        <span>${item.nome} (x${item.quantita})</span>
+                        <span>€ ${(item.prezzo * item.quantita).toFixed(2)}</span>
+                    </div>
+                `;
+            });
+
+            totalDiv.style.display = 'block';
+            totalSpan.innerText = totale.toFixed(2);
+        }
+
+        function svuotaCarrello() {
+            carrello = [];
+            localStorage.removeItem('carrello');
+            aggiornaInterfacciaCarrello();
+        }
+
+        function inviaInBackend() {
+            if (carrello.length === 0) {
+                alert("Il tuo carrello è vuoto!");
+                return;
+            }
+
+            fetch('/checkout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    carrello: carrello.map(item => ({ id_prodotto: item.id_prodotto, quantita: item.quantita }))
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    alert("🎉 ORDINE REGISTRATO NEL DB CON SUCCESSO!\nID Ordine generato: " + data.id_ordine);
+                    svuotaCarrello();
+                } else if (data.error) {
+                    alert("❌ ERRORE:\n" + data.error);
+                }
+            })
+            .catch(err => alert("Errore di rete: " + err));
+        }
+    </script>
+</body>
+</html>
