@@ -1,0 +1,49 @@
+USE techshop_db;
+
+CREATE TABLE categoria (
+    id_categoria INT AUTO_INCREMENT,
+    nome VARCHAR(100) NOT NULL UNIQUE,
+    descrizione TEXT,
+    PRIMARY KEY (id_categoria)
+);
+
+CREATE TABLE cliente (
+    id_cliente INT AUTO_INCREMENT,
+    nome VARCHAR(50) NOT NULL,
+    cognome VARCHAR(50) NOT NULL,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    password VARCHAR(250) NOT NULL,
+    data_registrazione DATETIME DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id_cliente)
+);
+
+CREATE TABLE prodotto (
+    id_prodotto INT AUTO_INCREMENT,
+    nome VARCHAR(100) NOT NULL,
+    prezzo DECIMAL(10,2) NOT NULL,
+    descrizione TEXT,
+    quantita_disp INT NOT NULL,
+    id_categoria INT,
+    immagine VARCHAR(100) NOT NULL,
+    PRIMARY KEY (id_prodotto),
+    FOREIGN KEY (id_categoria) REFERENCES categoria(id_categoria)
+);
+
+-- Tabella Ordine: identica al tuo schema, solo ID, Data e FK Cliente
+CREATE TABLE ordine (
+    id_ordine INT AUTO_INCREMENT,
+    data_ordine DATETIME DEFAULT CURRENT_TIMESTAMP,
+    id_cliente INT,
+    PRIMARY KEY (id_ordine),
+    FOREIGN KEY (id_cliente) REFERENCES cliente(id_cliente)
+);
+
+CREATE TABLE dettaglio_ordine (
+    id_ordine INT,
+    id_prodotto INT,
+    quantita INT NOT NULL,
+    prezzo_unitario DECIMAL(10,2) NOT NULL,
+    PRIMARY KEY (id_ordine, id_prodotto),
+    FOREIGN KEY (id_ordine) REFERENCES ordine(id_ordine),
+    FOREIGN KEY (id_prodotto) REFERENCES prodotto(id_prodotto)
+);
