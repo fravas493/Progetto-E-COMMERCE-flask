@@ -13,6 +13,15 @@ La struttura dei dati è stata progettata per garantire la massima coerenza. L'i
 
 ![Schema E-R](static/immagini/schema_er.png)
 
+Chiave di lettura:
+
+Un prodotto appartiene a una e una sola categoria, mentre una categoria può contenere uno o più prodotti.
+
+Uno o più prodotti appartengono a uno o più ordini, uno o più ordini appartengono a un prodotto.
+
+Un ordine è effettuato da un solo cliente, mentre un cliente può effettuare uno o più ordini nel tempo.
+
+
 ## 🗄️ Schema Logico (Database Relazionale)
 Per implementare il database, lo schema E-R è stato tradotto nel seguente modello relazionale, definendo chiavi primarie (PK) e chiavi esterne (FK):
 
